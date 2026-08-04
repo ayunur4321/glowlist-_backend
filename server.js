@@ -20,7 +20,7 @@ db.connect(err => {
     }
 });
 
-app.get('/jk', (req, res) => {
+app.get('/', (req, res) => {
     res.send('selamat datang di GlowList API!!!');
 });
 
