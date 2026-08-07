@@ -1,8 +1,10 @@
 const express = require('express');
+const cors = require('cors')
 const mysql = require('mysql2');    
 const app = express();
 const PORT = 3001;
 
+app.use(cors())
 app.use(express.json());
 
 const db = mysql.createConnection({
@@ -43,7 +45,67 @@ app.get('/produk', (req, res) => {
     });
 });
 
+app.post('/produk', (req, res) => {
+    const { judul, deskripsi, harga, id_kategori } = req.body;
 
+    if (!judul || !harga) {
+        return res.status(400).json({ message: 'Judul dan harga wajib diisi'});
+    }
+
+    if (!deskripsi) {
+        return res.status(400).json({ message: 'deskripsi juga wajib diisi yaaaaa'});
+    }
+
+    const sql = 'INSERT INTO produk (judul, deskripsi, harga, id_kategori, tgl_input) Values (?, ?, ?, ?, NOW())';
+    db.query(sql, [judul, deskripsi, harga, id_kategori], (err,result) => {
+        if (err) return res.status(500).json({error: err.sqlMessage});
+        res.json({
+            message: 'Produk berhasil ditambahkan!',
+            id_produk: result.insertId
+        });
+    });
+});
+
+//============edit produk============
+app.put('/produk/:id_produk', (req, res) => {
+    const { id_produk } = req.params;
+    const { judul, deskripsi, harga, id_kategori } = req.body;
+
+
+const sql = 'UPDATE produk SET judul=?, deskripsi=?, harga=?, id_kategori=? WHERE id_produk=?';
+    db.query(sql, [judul, deskripsi, harga, id_kategori, id_produk], (err, result) => {
+    if (err) return res.status(500).json({ error: err.sqlMessage});
+    if (result.affectedRows === 0 ) {
+        return res.status(400).json({
+            message: "Produk tidak ditemukan"
+        });
+    }
+    res.json({ message: 'Produk berhasil diupdate!' });
+});
+});
+
+//==================delet produk==========
+app.delete("/produk/:id_produk" , (req, res) =>  {
+    const { id_produk } = req.params;
+    const sql = "DELETE FROM produk WHERE id_produk = ?";
+    db.query(sql, [id_produk], (err,result) => {
+        if (err) return res.status(500).json({ error: err.sqlMessage});
+        if (result.affectedRows === 0 ) {
+        return res.status(400).json({
+            message: "Produk tidak ditemukan"
+        });
+    }
+    });
+});
+
+app.get('/produk/:id_produk', (req, res) => {
+    const { id_produk } = req.params;
+    const sql = 'SELECT * FROM produk WHERE id_produk = ?';
+    db.query(sql, [id_produk], (err, result) => {
+        if (err) return res.status(500).json({ error: err });
+        res.json(result);
+    })
+})
 app.listen(PORT,() => {
     console.log(`server GlowList jalan di http://localhost:${PORT}`);
 })
